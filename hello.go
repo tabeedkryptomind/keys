@@ -19,20 +19,29 @@ type Response events.APIGatewayProxyResponse
 	 lambda.Start(HandleRequest)
 }
 
-func getSecret(key string)*string {
+func HandleRequest(r Request) (Response, error) {
+	secret := r.PathParameters["secret"]
+	result := getSecret(secret)
 
+	return Response{
+		StatusCode:        200,
+		Body: *result,
+	},nil
+}
+
+func getSecret(key string)*string {
 	secretName := key
 	region := "us-east-2"
 
-	//Create a Secrets Manager client
 	sess, err := session.NewSession()
 	if err != nil {
-		// Handle session creation error
 		fmt.Println(err.Error())
 		return nil
 	}
+
 	svc := secretsmanager.New(sess,
-	                          aws.NewConfig().WithRegion(region))
+		aws.NewConfig().WithRegion(region))
+	
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId:     aws.String(secretName),
 		VersionStage: aws.String("AWSCURRENT"),
@@ -67,12 +76,3 @@ func getSecret(key string)*string {
 }
 
 
-func HandleRequest(r Request) (Response, error) {
-	secret := r.PathParameters["secret"]
-	result := getSecret(secret)
-
-	return Response{
-		StatusCode:        200,
-		Body: *result,
-	},nil
-}
